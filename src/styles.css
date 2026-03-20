@@ -1,0 +1,343 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap");
+
+:root {
+  color-scheme: dark;
+  --page-bg: #080506;
+  --page-bg-soft: #12090a;
+  --text: #f6eee5;
+  --text-dim: rgba(246, 238, 229, 0.68);
+  --paper: #f6eee5;
+  --line: rgba(255, 255, 255, 0.14);
+  --brand-red: #df241d;
+  --brand-red-soft: rgba(223, 36, 29, 0.26);
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: #000;
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(223, 36, 29, 0.12), transparent 22rem),
+    radial-gradient(circle at 82% 24%, rgba(255, 175, 138, 0.08), transparent 24rem),
+    linear-gradient(180deg, var(--page-bg-soft) 0%, var(--page-bg) 48%, #000 100%);
+  color: var(--text);
+  font-family: "Outfit", "Arial Narrow", Arial, sans-serif;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.page-shell {
+  min-height: 100dvh;
+}
+
+.scroll-stage {
+  position: relative;
+  height: 520vh;
+}
+
+.hero-pin {
+  position: sticky;
+  top: 0;
+  display: grid;
+  min-height: 100dvh;
+  overflow: clip;
+  place-items: stretch;
+}
+
+.hero-media,
+.hero-overlay {
+  grid-area: 1 / 1;
+}
+
+.hero-media {
+  position: relative;
+  isolation: isolate;
+  background: #050404;
+}
+
+.hero-video {
+  width: 100%;
+  height: 100dvh;
+  object-fit: cover;
+  transform: scale(1.04);
+  transform-origin: center center;
+  will-change: transform, filter;
+}
+
+.hero-vignette,
+.hero-beam,
+.hero-grid,
+.hero-grain,
+.hero-blackout {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-vignette {
+  background:
+    radial-gradient(circle at 50% 36%, transparent 0 14rem, rgba(0, 0, 0, 0.18) 25rem),
+    linear-gradient(180deg, rgba(4, 4, 4, 0.24) 0%, rgba(0, 0, 0, 0.74) 100%);
+}
+
+.hero-beam {
+  background:
+    linear-gradient(115deg, rgba(255, 193, 147, 0.16), transparent 30%),
+    linear-gradient(290deg, rgba(223, 36, 29, 0.18), transparent 36%);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+  mix-blend-mode: soft-light;
+  opacity: 0.34;
+}
+
+.hero-grain {
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 224, 201, 0.05) 22%,
+      transparent 40%,
+      rgba(223, 36, 29, 0.08) 58%,
+      transparent 76%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.hero-blackout {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(246, 238, 229, 0) 0, rgba(246, 238, 229, 0.18) 18rem, rgba(246, 238, 229, 0.96) 100%),
+    var(--paper);
+  opacity: 0;
+  will-change: opacity;
+}
+
+.hero-overlay {
+  position: relative;
+  min-height: 100dvh;
+  padding: clamp(1rem, 2vw, 1.75rem);
+  z-index: 1;
+}
+
+.hero-chrome {
+  position: absolute;
+  top: clamp(1rem, 2vw, 1.5rem);
+  left: clamp(1rem, 2vw, 1.5rem);
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.78rem 0.9rem 0.72rem;
+  border: 1px solid var(--line);
+  background: rgba(13, 7, 8, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 50px -26px var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.hero-label,
+.hero-meta {
+  margin: 0;
+}
+
+.hero-label {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-meta,
+.scroll-cue {
+  color: var(--text-dim);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.final-logo-lockup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(16rem, 50vw);
+  opacity: 0;
+  transform: translate3d(-50%, calc(-50% + 18px), 0);
+  will-change: opacity, transform;
+}
+
+.final-logo {
+  width: 100%;
+  height: auto;
+}
+
+.scroll-cue {
+  position: absolute;
+  bottom: clamp(1rem, 2vw, 1.5rem);
+  left: 50%;
+  padding: 0.55rem 0.8rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(7, 5, 5, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.scroll-cue span {
+  display: inline-block;
+  animation: pulse 1.9s ease-in-out infinite;
+}
+
+.hero-storyline {
+  position: absolute;
+  left: clamp(1rem, 2vw, 1.5rem);
+  bottom: clamp(1rem, 2vw, 1.5rem);
+  max-width: min(18rem, calc(100vw - 2rem));
+  margin: 0;
+  color: rgba(246, 238, 229, 0.92);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  will-change: opacity, transform;
+  z-index: 2;
+  text-wrap: balance;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.92;
+    transform: translateY(-0.16rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-overlay {
+    padding: 1rem;
+  }
+
+  .hero-video {
+    transform: scale(0.68);
+    object-position: 68% center;
+  }
+
+  .hero-label {
+    font-size: 0.84rem;
+  }
+
+  .hero-meta,
+  .scroll-cue {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+  }
+
+  .final-logo-lockup {
+    width: min(13rem, 60vw);
+  }
+
+  .hero-storyline {
+    max-width: min(14rem, calc(100vw - 2rem));
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-video {
+    transform: scale(0.6);
+    object-position: 74% center;
+  }
+
+  .hero-chrome {
+    top: 0.875rem;
+    left: 0.875rem;
+    padding: 0.68rem 0.78rem 0.62rem;
+  }
+
+  .final-logo-lockup {
+    width: min(14rem, 64vw);
+  }
+
+  .hero-storyline {
+    left: 0.875rem;
+    bottom: 0.875rem;
+    max-width: min(15rem, calc(100vw - 1.75rem));
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .scroll-cue {
+    bottom: 0.875rem;
+    padding: 0.5rem 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-stage {
+    height: auto;
+  }
+
+  .hero-pin {
+    position: relative;
+  }
+
+  .hero-video {
+    min-height: 100dvh;
+    transform: none;
+  }
+
+  .hero-blackout {
+    opacity: 0.78;
+  }
+
+  .final-logo-lockup {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0);
+  }
+
+  .hero-storyline {
+    opacity: 1;
+    transform: none;
+  }
+
+  .scroll-cue {
+    display: none;
+  }
+}
