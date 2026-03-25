@@ -35,19 +35,16 @@ const storyMoments = [
 ];
 
 function App() {
-  const stageRef = useRef(null);
   const videoRef = useRef(null);
   const blackoutRef = useRef(null);
   const logoWrapRef = useRef(null);
-  const scrollCueRef = useRef(null);
   const chromeRef = useRef(null);
   const storyRef = useRef(null);
-  const targetProgressRef = useRef(0);
-  const currentProgressRef = useRef(0);
-  const durationRef = useRef(6);
-  const rafRef = useRef(0);
   const reducedMotionRef = useRef(false);
   const mobileRef = useRef(false);
+  const rafRef = useRef(0);
+  const animationStartRef = useRef(null);
+  const holdTimeoutRef = useRef(0);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -56,38 +53,17 @@ function App() {
     mobileRef.current = mobileQuery.matches;
 
     const video = videoRef.current;
-    const stage = stageRef.current;
     const blackout = blackoutRef.current;
     const logoWrap = logoWrapRef.current;
-    const scrollCue = scrollCueRef.current;
     const chrome = chromeRef.current;
     const story = storyRef.current;
 
-    if (!video || !stage || !blackout || !logoWrap || !scrollCue || !chrome || !story) {
+    if (!video || !blackout || !logoWrap || !chrome || !story) {
       return undefined;
     }
 
-    const setScene = (progress) => {
-      const easedProgress = clamp(progress, 0, 1);
-      const videoScale = 1.04 - smoothstep(mapRange(easedProgress, 0, 0.74)) * 0.04;
-      const videoContrast = 1.02 + smoothstep(mapRange(easedProgress, 0.08, 0.68)) * 0.08;
-      const videoBrightness = 0.88 - smoothstep(mapRange(easedProgress, 0.64, 1)) * 0.08;
-
-      video.style.transform = `scale(${videoScale.toFixed(4)})`;
-      video.style.filter = `saturate(0.9) contrast(${videoContrast.toFixed(3)}) brightness(${videoBrightness.toFixed(3)})`;
-
-      const blackoutStart = mobileRef.current ? 0.74 : 0.7;
-      const blackoutEnd = mobileRef.current ? 0.96 : 0.94;
-      const blackoutProgress = smoothstep(mapRange(easedProgress, blackoutStart, blackoutEnd));
-      blackout.style.opacity = blackoutProgress.toFixed(3);
-
-      const logoStart = mobileRef.current ? 0.86 : 0.82;
-      const logoOpacity = smoothstep(mapRange(easedProgress, logoStart, 0.985));
-      const logoTranslate = 18 - logoOpacity * 18;
-      logoWrap.style.opacity = logoOpacity.toFixed(3);
-      logoWrap.style.transform = `translate3d(-50%, calc(-50% + ${logoTranslate.toFixed(2)}px), 0)`;
-
-      const activeMoments = mobileRef.current
+    const getMoments = () =>
+      mobileRef.current
         ? [
             {
               text: storyMoments[0].text,
@@ -112,6 +88,28 @@ function App() {
             },
           ]
         : storyMoments;
+
+    const setScene = (progress) => {
+      const easedProgress = clamp(progress, 0, 1);
+      const videoScale = 1.04 - smoothstep(mapRange(easedProgress, 0, 0.74)) * 0.04;
+      const videoContrast = 1.02 + smoothstep(mapRange(easedProgress, 0.08, 0.68)) * 0.08;
+      const videoBrightness = 0.88 - smoothstep(mapRange(easedProgress, 0.64, 1)) * 0.08;
+
+      video.style.transform = `scale(${videoScale.toFixed(4)})`;
+      video.style.filter = `saturate(0.9) contrast(${videoContrast.toFixed(3)}) brightness(${videoBrightness.toFixed(3)})`;
+
+      const blackoutStart = mobileRef.current ? 0.74 : 0.7;
+      const blackoutEnd = mobileRef.current ? 0.96 : 0.94;
+      const blackoutProgress = smoothstep(mapRange(easedProgress, blackoutStart, blackoutEnd));
+      blackout.style.opacity = blackoutProgress.toFixed(3);
+
+      const logoStart = mobileRef.current ? 0.86 : 0.82;
+      const logoOpacity = smoothstep(mapRange(easedProgress, logoStart, 0.985));
+      const logoTranslate = 18 - logoOpacity * 18;
+      logoWrap.style.opacity = logoOpacity.toFixed(3);
+      logoWrap.style.transform = `translate3d(-50%, calc(-50% + ${logoTranslate.toFixed(2)}px), 0)`;
+
+      const activeMoments = getMoments();
       const activeMoment =
         activeMoments.find(
           (moment) =>
@@ -129,100 +127,92 @@ function App() {
       story.style.opacity = storyOpacity.toFixed(3);
       story.style.transform = `translate3d(0, ${storyLift.toFixed(2)}px, 0)`;
 
-      const cueOpacity = 1 - smoothstep(mapRange(easedProgress, 0.04, 0.18));
-      scrollCue.style.opacity = cueOpacity.toFixed(3);
-
       const chromeOpacity = 1 - smoothstep(mapRange(easedProgress, 0.66, 0.82));
       chrome.style.opacity = chromeOpacity.toFixed(3);
     };
 
-    const setVideoTime = (progress) => {
-      const playableDuration = Math.max(durationRef.current - 0.05, 0);
-      const nextTime = clamp(progress, 0, 1) * playableDuration;
-      const drift = Math.abs(video.currentTime - nextTime);
-
-      if (drift > 0.033) {
-        video.currentTime = nextTime;
-      }
-    };
-
-    const updateScene = () => {
-      currentProgressRef.current +=
-        (targetProgressRef.current - currentProgressRef.current) * 0.12;
-
-      if (Math.abs(targetProgressRef.current - currentProgressRef.current) < 0.0005) {
-        currentProgressRef.current = targetProgressRef.current;
-      }
-
-      setVideoTime(currentProgressRef.current);
-      setScene(currentProgressRef.current);
-
-      if (currentProgressRef.current !== targetProgressRef.current) {
-        rafRef.current = window.requestAnimationFrame(updateScene);
-      } else {
+    const finishAtLogo = () => {
+      if (rafRef.current) {
+        window.cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
+
+      video.pause();
+      setScene(1);
     };
 
-    const queueUpdate = () => {
-      if (!rafRef.current) {
-        rafRef.current = window.requestAnimationFrame(updateScene);
+    const runTimeline = (timestamp) => {
+      if (animationStartRef.current === null) {
+        animationStartRef.current = timestamp;
+      }
+
+      const duration = Math.max((video.duration || 6) * 1000, 1);
+      const progress = clamp((timestamp - animationStartRef.current) / duration, 0, 1);
+
+      setScene(progress);
+
+      if (progress < 1) {
+        rafRef.current = window.requestAnimationFrame(runTimeline);
+      } else {
+        rafRef.current = 0;
+        holdTimeoutRef.current = window.setTimeout(finishAtLogo, 120);
       }
     };
 
-    const syncScrollProgress = () => {
+    const startPlayback = async () => {
+      animationStartRef.current = null;
+      setScene(0);
+
       if (reducedMotionRef.current) {
-        setScene(1);
+        finishAtLogo();
         return;
       }
 
-      const rect = stage.getBoundingClientRect();
-      const totalScrollable = Math.max(rect.height - window.innerHeight, 1);
-      const traveled = clamp(-rect.top, 0, totalScrollable);
-      targetProgressRef.current = clamp(traveled / totalScrollable, 0, 1);
-      queueUpdate();
+      video.currentTime = 0;
+      video.muted = true;
+      video.playsInline = true;
+
+      try {
+        await video.play();
+      } catch (_error) {
+        // Ignore autoplay rejection; visual timeline still runs.
+      }
+
+      rafRef.current = window.requestAnimationFrame(runTimeline);
     };
 
     const onMotionChange = (event) => {
       reducedMotionRef.current = event.matches;
+      window.clearTimeout(holdTimeoutRef.current);
+
+      if (rafRef.current) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
 
       if (event.matches) {
-        if (rafRef.current) {
-          window.cancelAnimationFrame(rafRef.current);
-          rafRef.current = 0;
-        }
-
-        currentProgressRef.current = 1;
-        targetProgressRef.current = 1;
-        setScene(1);
-        video.removeAttribute("muted");
+        finishAtLogo();
         return;
       }
 
-      video.muted = true;
-      syncScrollProgress();
+      startPlayback();
     };
 
     const onMobileChange = (event) => {
       mobileRef.current = event.matches;
-      syncScrollProgress();
+      setScene(1);
     };
 
     const onMetadata = () => {
-      durationRef.current = video.duration || durationRef.current;
-
-      if (reducedMotionRef.current) {
-        setScene(1);
-        return;
-      }
-
-      setVideoTime(0);
-      syncScrollProgress();
+      startPlayback();
     };
 
     video.pause();
     video.muted = true;
     video.playsInline = true;
+
+    mediaQuery.addEventListener("change", onMotionChange);
+    mobileQuery.addEventListener("change", onMobileChange);
 
     if (video.readyState >= 1) {
       onMetadata();
@@ -230,26 +220,13 @@ function App() {
       video.addEventListener("loadedmetadata", onMetadata, { once: true });
     }
 
-    if (!reducedMotionRef.current) {
-      window.addEventListener("scroll", syncScrollProgress, { passive: true });
-      window.addEventListener("resize", syncScrollProgress);
-      window.addEventListener("load", syncScrollProgress);
-      mediaQuery.addEventListener("change", onMotionChange);
-      mobileQuery.addEventListener("change", onMobileChange);
-    } else {
-      setScene(1);
-      mediaQuery.addEventListener("change", onMotionChange);
-      mobileQuery.addEventListener("change", onMobileChange);
-    }
-
     return () => {
+      window.clearTimeout(holdTimeoutRef.current);
+
       if (rafRef.current) {
         window.cancelAnimationFrame(rafRef.current);
       }
 
-      window.removeEventListener("scroll", syncScrollProgress);
-      window.removeEventListener("resize", syncScrollProgress);
-      window.removeEventListener("load", syncScrollProgress);
       mediaQuery.removeEventListener("change", onMotionChange);
       mobileQuery.removeEventListener("change", onMobileChange);
     };
@@ -257,7 +234,7 @@ function App() {
 
   return (
     <main className="page-shell">
-      <section ref={stageRef} className="scroll-stage" aria-label="Shushu Mushu intro">
+      <section className="scroll-stage autoplay-stage" aria-label="Shushu Mushu intro">
         <div className="hero-pin">
           <div className="hero-media">
             <video
@@ -293,9 +270,6 @@ function App() {
               />
             </div>
 
-            <div ref={scrollCueRef} className="scroll-cue">
-              <span>Scroll to enter</span>
-            </div>
           </div>
         </div>
       </section>
